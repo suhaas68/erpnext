@@ -82,7 +82,9 @@ class Workstation(Document):
 				)
 
 	def before_save(self):
-		self.set_data_based_on_workstation_type()
+		if self.has_value_changed("workstation_type"):
+			self.set_data_based_on_workstation_type()
+
 		self.set_hour_rate()
 		self.set_total_working_hours()
 		self.disabled_workstation()
@@ -101,9 +103,6 @@ class Workstation(Document):
 				self.total_working_hours += row.hours
 
 	def validate_working_hours(self, row):
-		if not (row.start_time and row.end_time):
-			frappe.throw(_("Row #{0}: Start Time and End Time are required").format(row.idx))
-
 		if get_time(row.start_time) >= get_time(row.end_time):
 			frappe.throw(_("Row #{0}: Start Time must be before End Time").format(row.idx))
 
@@ -115,9 +114,6 @@ class Workstation(Document):
 
 	@frappe.whitelist()
 	def set_data_based_on_workstation_type(self):
-		if self.workstation_costs:
-			return
-
 		if self.workstation_type:
 			data = frappe.get_all(
 				"Workstation Cost",
@@ -125,6 +121,9 @@ class Workstation(Document):
 				filters={"parent": self.workstation_type, "parenttype": "Workstation Type"},
 				order_by="idx",
 			)
+
+			if data:
+				self.workstation_costs = []
 
 			for row in data:
 				self.append(
@@ -233,7 +232,7 @@ class Workstation(Document):
 
 
 @frappe.whitelist()
-def get_job_cards(workstation, job_card=None):
+def get_job_cards(workstation: str):
 	if frappe.has_permission("Job Card", "read"):
 		jc_data = frappe.get_all(
 			"Job Card",
@@ -264,6 +263,7 @@ def get_job_cards(workstation, job_card=None):
 				"status": ["not in", ["Completed", "Stopped"]],
 			},
 			order_by="expected_start_date, expected_end_date",
+			limit=10,
 		)
 
 		job_cards = [row.name for row in jc_data]
@@ -517,7 +517,7 @@ def get_color_map():
 
 
 @frappe.whitelist()
-def update_job_card(job_card, method, **kwargs):
+def update_job_card(job_card: str, method: str, **kwargs):
 	if isinstance(kwargs, dict):
 		kwargs = frappe._dict(kwargs)
 
@@ -527,7 +527,6 @@ def update_job_card(job_card, method, **kwargs):
 	if kwargs.qty and isinstance(kwargs.qty, str):
 		kwargs.qty = flt(kwargs.qty)
 
-	print(method)
 	doc = frappe.get_doc("Job Card", job_card)
 	doc.run_method(method, **kwargs)
 

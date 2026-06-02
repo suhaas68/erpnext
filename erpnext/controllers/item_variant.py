@@ -188,7 +188,7 @@ def find_variant(template, args, variant_item_code=None):
 
 			for attribute, value in args.items():
 				for row in variant.attributes:
-					if row.attribute == attribute and row.attribute_value == cstr(value):
+					if row.attribute == _(attribute) and row.attribute_value == cstr(value):
 						# this row matches
 						match_count += 1
 						break
@@ -209,7 +209,7 @@ def create_variant(item, args, use_template_image=False):
 	variant_attributes = []
 
 	for d in template.attributes:
-		variant_attributes.append({"attribute": d.attribute, "attribute_value": args.get(d.attribute)})
+		variant_attributes.append({"attribute": d.attribute, "attribute_value": args.get(_(d.attribute))})
 
 	variant.set("attributes", variant_attributes)
 	copy_attributes_to_variant(template, variant)
@@ -360,13 +360,13 @@ def copy_attributes_to_variant(item, variant):
 	else:
 		if item.variant_based_on == "Item Attribute":
 			if variant.attributes:
-				attributes_description = item.description + " "
+				attributes_description = item.description or ""
 				for d in variant.attributes:
 					attributes_description += (
 						"<div>" + d.attribute + ": " + cstr(d.attribute_value) + "</div>"
 					)
 
-				if attributes_description not in variant.description:
+				if attributes_description not in (variant.description or ""):
 					variant.description = attributes_description
 
 

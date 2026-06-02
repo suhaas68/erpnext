@@ -127,22 +127,20 @@ class Project(Document):
 
 	def create_task_from_template(self, task_details):
 		return frappe.get_doc(
-			dict(
-				doctype="Task",
-				subject=task_details.subject,
-				project=self.name,
-				status="Open",
-				exp_start_date=self.calculate_start_date(task_details),
-				exp_end_date=self.calculate_end_date(task_details),
-				description=task_details.description,
-				task_weight=task_details.task_weight,
-				type=task_details.type,
-				issue=task_details.issue,
-				is_group=task_details.is_group,
-				color=task_details.color,
-				template_task=task_details.name,
-				priority=task_details.priority,
-			)
+			doctype="Task",
+			subject=task_details.subject,
+			project=self.name,
+			status="Open",
+			exp_start_date=self.calculate_start_date(task_details),
+			exp_end_date=self.calculate_end_date(task_details),
+			description=task_details.description,
+			task_weight=task_details.task_weight,
+			type=task_details.type,
+			issue=task_details.issue,
+			is_group=task_details.is_group,
+			color=task_details.color,
+			template_task=task_details.name,
+			priority=task_details.priority,
 		).insert()
 
 	def calculate_start_date(self, task_details):
@@ -310,6 +308,8 @@ class Project(Document):
 		self.gross_margin = flt(self.total_billed_amount) - expense_amount
 		if self.total_billed_amount:
 			self.per_gross_margin = (self.gross_margin / flt(self.total_billed_amount)) * 100
+		else:
+			self.per_gross_margin = 0
 
 	def update_purchase_costing(self):
 		total_purchase_cost = calculate_total_purchase_cost(self.name)
@@ -605,7 +605,7 @@ def send_project_update_email_to_users(project):
 			"sent": 0,
 			"date": today(),
 			"time": nowtime(),
-			"naming_series": "UPDATE-.project.-.YY.MM.DD.-",
+			"naming_series": "UPDATE-.project.-.YY.MM.DD.-.####",
 		}
 	).insert()
 
