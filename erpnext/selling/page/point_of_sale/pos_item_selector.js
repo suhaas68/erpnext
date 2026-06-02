@@ -237,8 +237,33 @@ erpnext.PointOfSale.ItemSelector = class {
 
 		$(this.item_group_field.awesomplete.ul).css("min-width", "unset");
 
+		// this.hide_open_link_btn();
+		// this.attach_clear_btn();
+
 		this.hide_open_link_btn();
 		this.attach_clear_btn();
+
+		this.search_field.$wrapper.find(".control-input").css("position", "relative");
+
+		this.search_field.$input.css("padding-right", "35px");
+
+		this.search_field.$wrapper.find(".control-input").append(`
+			<span
+				class="barcode-scan-btn"
+					style="
+					position:absolute;
+					right:35px;
+					top:50%;
+					transform:translateY(-50%);
+					cursor:pointer;
+					z-index:100;
+					display:flex;
+					align-items:center;
+				"
+			>
+				${frappe.utils.icon("scan")}
+			</span>
+		`);
 	}
 
 	set_item_selector_filter_label(value) {
@@ -284,9 +309,30 @@ erpnext.PointOfSale.ItemSelector = class {
 		$(this.search_field.$input[0]).val(value).trigger("input");
 	}
 
+	open_barcode_scanner() {
+	new frappe.ui.Scanner({
+		dialog: true,
+		multiple: false,
+		on_scan: (data) => {
+			this.set_search_value(data.decodedText || data);
+			this.filter_items({
+				search_term: data.decodedText || data
+			});
+		}
+	});
+}
+
 	bind_events() {
 		const me = this;
 		window.onScan = onScan;
+
+		this.search_field.$wrapper.on(
+			"click",
+			".barcode-scan-btn",
+			() => {
+				this.open_barcode_scanner();
+			}
+		);
 
 		onScan.decodeKeyEvent = function (oEvent) {
 			var iCode = this._getNormalizedKeyNum(oEvent);
